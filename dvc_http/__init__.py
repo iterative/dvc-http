@@ -2,11 +2,10 @@ import threading
 from getpass import getpass
 from typing import BinaryIO, Union
 
-from funcy import cached_property, memoize, wrap_with
-
 from dvc_objects.fs.base import AnyFSPath, FileSystem
 from dvc_objects.fs.callbacks import DEFAULT_CALLBACK, Callback
 from dvc_objects.fs.errors import ConfigError
+from funcy import cached_property, memoize, wrap_with
 
 
 @wrap_with(threading.Lock())
