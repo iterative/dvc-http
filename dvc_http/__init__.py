@@ -162,3 +162,7 @@ class HTTPFileSystem(FileSystem):
         raise NotImplementedError
 
     # pylint: enable=arguments-differ
+
+
+class HTTPSFileSystem(HTTPFileSystem):  # pylint:disable=abstract-method
+    protocol = "https"
