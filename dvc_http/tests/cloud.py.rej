@@ -1,0 +1,9 @@
+diff a/dvc_http/tests/cloud.py b/dvc_http/tests/cloud.py	(rejected hunks)
+@@ -1,6 +1,7 @@
+ from dvc.testing.cloud import Cloud
+ from dvc.testing.path_info import CloudURLInfo
+ 
++
+ class HTTP(Cloud, CloudURLInfo):
+     @property
+     def config(self):
