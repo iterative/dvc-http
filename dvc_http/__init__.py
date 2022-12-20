@@ -1,6 +1,6 @@
 import threading
 from getpass import getpass
-from typing import BinaryIO, Union
+from typing import BinaryIO, Optional, Union
 
 from dvc_objects.fs.base import AnyFSPath, FileSystem
 from dvc_objects.fs.callbacks import DEFAULT_CALLBACK, Callback
@@ -88,6 +88,15 @@ class HTTPFileSystem(FileSystem):
         # The connector should not be owned by aiohttp.ClientSession since
         # it is closed by fsspec (HTTPFileSystem.close_session)
         client_kwargs["connector_owner"] = False
+        client_kwargs["connect_timeout"] = config.get(
+            "connect_timeout", self.REQUEST_TIMEOUT
+        )
+        client_kwargs["sock_connect_timeout"] = config.get(
+            "sock_connect_timeout", self.REQUEST_TIMEOUT
+        )
+        client_kwargs["sock_read_timeout"] = config.get(
+            "sock_read_timeout", self.REQUEST_TIMEOUT
+        )
 
         # Allow reading proxy configurations from the environment.
         client_kwargs["trust_env"] = True
@@ -96,7 +105,13 @@ class HTTPFileSystem(FileSystem):
         self.upload_method = config.get("method", "POST")
         return credentials
 
-    async def get_client(self, **kwargs):
+    async def get_client(
+        self,
+        connect_timeout: Optional[float],
+        sock_connect_timeout: Optional[float],
+        sock_read_timeout: Optional[float],
+        **kwargs,
+    ):
         import aiohttp
         from aiohttp_retry import ExponentialRetry
 
@@ -116,9 +131,9 @@ class HTTPFileSystem(FileSystem):
         # time that is spent when connecting to the remote server.
         kwargs["timeout"] = aiohttp.ClientTimeout(
             total=None,
-            connect=self.REQUEST_TIMEOUT,
-            sock_connect=self.REQUEST_TIMEOUT,
-            sock_read=self.REQUEST_TIMEOUT,
+            connect=connect_timeout,
+            sock_connect=sock_connect_timeout,
+            sock_read=sock_read_timeout,
         )
 
         return ReadOnlyRetryClient(**kwargs)
