@@ -40,7 +40,7 @@ class HTTPFileSystem(FileSystem):
 
     def _prepare_credentials(self, **config):
         import aiohttp
-        from fsspec.asyn import fsspec_loop
+        from fsspec.asyn import get_loop as get_fsspec_loop
 
         credentials = {}
         client_kwargs = credentials.setdefault("client_kwargs", {})
@@ -81,10 +81,9 @@ class HTTPFileSystem(FileSystem):
         if "ssl_verify" in config:
             connector_kwargs.update(ssl=make_context(config["ssl_verify"]))
 
-        with fsspec_loop():
-            client_kwargs["connector"] = aiohttp.TCPConnector(
-                **connector_kwargs
-            )
+        client_kwargs["connector"] = aiohttp.TCPConnector(
+            loop=get_fsspec_loop(), **connector_kwargs
+        )
         # The connector should not be owned by aiohttp.ClientSession since
         # it is closed by fsspec (HTTPFileSystem.close_session)
         client_kwargs["connector_owner"] = False
