@@ -121,7 +121,7 @@ class HTTPFileSystem(FileSystem):
             attempts=self.SESSION_RETRIES,
             factor=self.SESSION_BACKOFF_FACTOR,
             max_timeout=self.REQUEST_TIMEOUT,
-            exceptions=[aiohttp.ClientError],
+            exceptions={aiohttp.ClientError},
         )
 
         # The default timeout for the aiohttp is 300 seconds
