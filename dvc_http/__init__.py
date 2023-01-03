@@ -1,11 +1,14 @@
 import threading
 from getpass import getpass
-from typing import BinaryIO, Optional, Union
+from typing import TYPE_CHECKING, BinaryIO, Optional, Union
 
 from dvc_objects.fs.base import AnyFSPath, FileSystem
 from dvc_objects.fs.callbacks import DEFAULT_CALLBACK, Callback
 from dvc_objects.fs.errors import ConfigError
 from funcy import cached_property, memoize, wrap_with
+
+if TYPE_CHECKING:
+    from ssl import SSLContext
 
 
 @wrap_with(threading.Lock())
@@ -14,7 +17,9 @@ def ask_password(host, user):
     return getpass(f"Enter a password for host '{host}' user '{user}':\n")
 
 
-def make_context(ssl_verify):
+def make_context(
+    ssl_verify: Union[bool, str, None]
+) -> Union["SSLContext", bool, None]:
     if isinstance(ssl_verify, bool) or ssl_verify is None:
         return ssl_verify
 
@@ -40,7 +45,6 @@ class HTTPFileSystem(FileSystem):
 
     def _prepare_credentials(self, **config):
         import aiohttp
-        from fsspec.asyn import fsspec_loop
 
         credentials = {}
         client_kwargs = credentials.setdefault("client_kwargs", {})
@@ -74,27 +78,12 @@ class HTTPFileSystem(FileSystem):
                     f"Auth method {auth_method!r} is not supported."
                 )
 
-        # Force cleanup of closed SSL transports.
-        # https://github.com/iterative/dvc/issues/7414
-        connector_kwargs = {"enable_cleanup_closed": True}
-
         if "ssl_verify" in config:
-            connector_kwargs.update(ssl=make_context(config["ssl_verify"]))
+            client_kwargs["ssl_verify"] = config["ssl_verify"]
 
-        with fsspec_loop():
-            client_kwargs["connector"] = aiohttp.TCPConnector(
-                **connector_kwargs
-            )
-        # The connector should not be owned by aiohttp.ClientSession since
-        # it is closed by fsspec (HTTPFileSystem.close_session)
-        client_kwargs["connector_owner"] = False
-
-        client_kwargs["connect_timeout"] = config.get(
-            "connect_timeout", self.REQUEST_TIMEOUT
-        )
-        client_kwargs["read_timeout"] = config.get(
-            "read_timeout", self.REQUEST_TIMEOUT
-        )
+        for timeout in ("connect_timeout", "read_timeout"):
+            if timeout in config:
+                client_kwargs[timeout] = config.get(timeout)
 
         # Allow reading proxy configurations from the environment.
         client_kwargs["trust_env"] = True
@@ -105,8 +94,6 @@ class HTTPFileSystem(FileSystem):
 
     async def get_client(
         self,
-        connect_timeout: Optional[float],
-        read_timeout: Optional[float],
         **kwargs,
     ):
         import aiohttp
@@ -121,16 +108,24 @@ class HTTPFileSystem(FileSystem):
             exceptions={aiohttp.ClientError},
         )
 
-        # The default timeout for the aiohttp is 300 seconds
-        # which is too low for DVC's interactions (especially
-        # on the read) when dealing with large data blobs. We
-        # unlimit the total time to read, and only limit the
-        # time that is spent when connecting to the remote server.
+        # The default total timeout for an aiohttp request is 300 seconds
+        # which is too low for DVC's interactions when dealing with large
+        # data blobs. We remove the total timeout, and only limit the time
+        # that is spent when connecting to the remote server and waiting
+        # for new data portions.
+        connect_timeout = kwargs.get("connect_timeout", self.REQUEST_TIMEOUT)
         kwargs["timeout"] = aiohttp.ClientTimeout(
             total=None,
             connect=connect_timeout,
             sock_connect=connect_timeout,
-            sock_read=read_timeout,
+            sock_read=kwargs.get("read_timeout", self.REQUEST_TIMEOUT),
+        )
+
+        kwargs["connector"] = aiohttp.TCPConnector(
+            # Force cleanup of closed SSL transports.
+            # See https://github.com/iterative/dvc/issues/7414
+            enable_cleanup_closed=True,
+            ssl=make_context(kwargs.get("ssl_verify")),
         )
 
         return ReadOnlyRetryClient(**kwargs)
