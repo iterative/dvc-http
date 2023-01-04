@@ -88,14 +88,12 @@ class HTTPFileSystem(FileSystem):
         # The connector should not be owned by aiohttp.ClientSession since
         # it is closed by fsspec (HTTPFileSystem.close_session)
         client_kwargs["connector_owner"] = False
+
         client_kwargs["connect_timeout"] = config.get(
             "connect_timeout", self.REQUEST_TIMEOUT
         )
-        client_kwargs["sock_connect_timeout"] = config.get(
-            "sock_connect_timeout", self.REQUEST_TIMEOUT
-        )
-        client_kwargs["sock_read_timeout"] = config.get(
-            "sock_read_timeout", self.REQUEST_TIMEOUT
+        client_kwargs["read_timeout"] = config.get(
+            "read_timeout", self.REQUEST_TIMEOUT
         )
 
         # Allow reading proxy configurations from the environment.
@@ -108,8 +106,7 @@ class HTTPFileSystem(FileSystem):
     async def get_client(
         self,
         connect_timeout: Optional[float],
-        sock_connect_timeout: Optional[float],
-        sock_read_timeout: Optional[float],
+        read_timeout: Optional[float],
         **kwargs,
     ):
         import aiohttp
@@ -132,8 +129,8 @@ class HTTPFileSystem(FileSystem):
         kwargs["timeout"] = aiohttp.ClientTimeout(
             total=None,
             connect=connect_timeout,
-            sock_connect=sock_connect_timeout,
-            sock_read=sock_read_timeout,
+            sock_connect=connect_timeout,
+            sock_read=read_timeout,
         )
 
         return ReadOnlyRetryClient(**kwargs)
