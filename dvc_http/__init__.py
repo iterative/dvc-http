@@ -1,6 +1,6 @@
 import threading
 from getpass import getpass
-from typing import BinaryIO, Optional, Union
+from typing import Any, BinaryIO, Dict, Optional, Union
 
 from dvc_objects.fs.base import AnyFSPath, FileSystem
 from dvc_objects.fs.callbacks import DEFAULT_CALLBACK, Callback
@@ -73,20 +73,11 @@ class HTTPFileSystem(FileSystem):
                     f"Auth method {auth_method!r} is not supported."
                 )
 
-        # Force cleanup of closed SSL transports.
-        # https://github.com/iterative/dvc/issues/7414
-        connector_kwargs = {"enable_cleanup_closed": True}
-
         if "ssl_verify" in config:
-            connector_kwargs.update(ssl=make_context(config["ssl_verify"]))
+            client_kwargs["connector_kwargs"] = {
+                "ssl": make_context(config["ssl_verify"])
+            }
 
-        client_kwargs["connector"] = aiohttp.TCPConnector(
-            loop=self.fs.loop, **connector_kwargs
-        )
-
-        # The connector should not be owned by aiohttp.ClientSession since
-        # it is closed by fsspec (HTTPFileSystem.close_session)
-        client_kwargs["connector_owner"] = False
         client_kwargs["connect_timeout"] = config.get(
             "connect_timeout", self.REQUEST_TIMEOUT
         )
@@ -109,6 +100,7 @@ class HTTPFileSystem(FileSystem):
         connect_timeout: Optional[float],
         sock_connect_timeout: Optional[float],
         sock_read_timeout: Optional[float],
+        connector_kwargs: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
         import aiohttp
@@ -134,6 +126,11 @@ class HTTPFileSystem(FileSystem):
             sock_connect=sock_connect_timeout,
             sock_read=sock_read_timeout,
         )
+
+        if connector_kwargs:
+            kwargs["connector"] = aiohttp.TCPConnector(
+                loop=self.fs.loop, **connector_kwargs
+            )
 
         return ReadOnlyRetryClient(**kwargs)
 
