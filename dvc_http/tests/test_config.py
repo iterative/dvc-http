@@ -1,6 +1,8 @@
 import ssl
 
 from dvc.fs import HTTPFileSystem
+from fsspec.asyn import get_loop as get_fsspec_loop
+from fsspec.asyn import sync
 
 
 def test_public_auth_method():
@@ -60,7 +62,10 @@ def test_ssl_verify_disable():
     }
 
     fs = HTTPFileSystem(**config)
-    assert not fs.fs_args["client_kwargs"]["connector"]._ssl
+    session = sync(get_fsspec_loop(), fs.fs.set_session)
+
+    # pylint: disable-next=protected-access
+    assert not session._client._connector._ssl
 
 
 def test_ssl_verify_custom_cert(mocker):
@@ -72,10 +77,10 @@ def test_ssl_verify_custom_cert(mocker):
     }
 
     fs = HTTPFileSystem(**config)
+    session = sync(get_fsspec_loop(), fs.fs.set_session)
 
-    assert isinstance(
-        fs.fs_args["client_kwargs"]["connector"]._ssl, ssl.SSLContext
-    )
+    # pylint: disable-next=protected-access
+    assert isinstance(session._client.connector._ssl, ssl.SSLContext)
 
 
 def test_http_method():
