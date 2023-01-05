@@ -113,19 +113,19 @@ class HTTPFileSystem(FileSystem):
         # data blobs. We remove the total timeout, and only limit the time
         # that is spent when connecting to the remote server and waiting
         # for new data portions.
-        connect_timeout = kwargs.get("connect_timeout", self.REQUEST_TIMEOUT)
+        connect_timeout = kwargs.pop("connect_timeout", self.REQUEST_TIMEOUT)
         kwargs["timeout"] = aiohttp.ClientTimeout(
             total=None,
             connect=connect_timeout,
             sock_connect=connect_timeout,
-            sock_read=kwargs.get("read_timeout", self.REQUEST_TIMEOUT),
+            sock_read=kwargs.pop("read_timeout", self.REQUEST_TIMEOUT),
         )
 
         kwargs["connector"] = aiohttp.TCPConnector(
             # Force cleanup of closed SSL transports.
             # See https://github.com/iterative/dvc/issues/7414
             enable_cleanup_closed=True,
-            ssl=make_context(kwargs.get("ssl_verify")),
+            ssl=make_context(kwargs.pop("ssl_verify", None)),
         )
 
         return ReadOnlyRetryClient(**kwargs)
