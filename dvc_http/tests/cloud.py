@@ -17,7 +17,7 @@ class HTTP(Cloud, HTTPURLInfo):
 
     def write_bytes(self, contents):
         assert isinstance(contents, bytes)
-        response = requests.post(self.url, data=contents)
+        response = requests.post(self.url, data=contents, timeout=300)
         assert response.status_code == 200
 
     @property
