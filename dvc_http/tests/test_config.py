@@ -1,5 +1,6 @@
 import ssl
 
+import pytest
 from dvc.fs import HTTPFileSystem
 from fsspec.asyn import get_loop as get_fsspec_loop
 from fsspec.asyn import sync
@@ -94,3 +95,18 @@ def test_http_method():
 
     fs = HTTPFileSystem(**config, method="POST")
     assert fs.upload_method == "POST"
+
+
+@pytest.mark.parametrize(
+    "kwarg,value",
+    (
+        ("connect_timeout", 42),
+        ("read_timeout", 42),
+    ),
+)
+def test_timeout_options(kwarg, value):
+    url = "https://remote.dvc.org/get-started"
+    config = {"url": url, kwarg: value}
+    fs = HTTPFileSystem(**config)
+
+    assert fs.fs_args["client_kwargs"][kwarg] == value
