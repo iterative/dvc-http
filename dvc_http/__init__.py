@@ -1,6 +1,6 @@
 import threading
 from getpass import getpass
-from typing import TYPE_CHECKING, BinaryIO, Optional, Union
+from typing import TYPE_CHECKING, BinaryIO, Union
 
 from dvc_objects.fs.base import AnyFSPath, FileSystem
 from dvc_objects.fs.callbacks import DEFAULT_CALLBACK, Callback
