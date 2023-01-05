@@ -54,7 +54,6 @@ files = ["dvc_http"]
 [tool.pylint.master]
 extension-pkg-whitelist = ["pygit2"]
 init-hook = "import sys; sys.path.append(str('tests'))"
-load-plugins = ["pylint_pytest"]
 
 [tool.pylint.message_control]
 disable = [
