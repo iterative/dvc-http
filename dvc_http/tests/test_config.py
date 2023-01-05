@@ -3,7 +3,7 @@ import ssl
 from dvc.fs import HTTPFileSystem
 
 
-def test_public_auth_method(dvc):
+def test_public_auth_method():
     config = {
         "url": "http://example.com/",
         "path": "file.html",
@@ -17,7 +17,7 @@ def test_public_auth_method(dvc):
     assert "headers" not in fs.fs_args
 
 
-def test_basic_auth_method(dvc):
+def test_basic_auth_method():
     user = "username"
     password = "password"
     config = {
@@ -34,7 +34,7 @@ def test_basic_auth_method(dvc):
     assert fs.fs_args["client_kwargs"]["auth"].password == password
 
 
-def test_custom_auth_method(dvc):
+def test_custom_auth_method():
     header = "Custom-Header"
     password = "password"
     config = {
@@ -52,7 +52,7 @@ def test_custom_auth_method(dvc):
     assert headers[header] == password
 
 
-def test_ssl_verify_disable(dvc):
+def test_ssl_verify_disable():
     config = {
         "url": "http://example.com/",
         "path": "file.html",
@@ -63,7 +63,7 @@ def test_ssl_verify_disable(dvc):
     assert not fs.fs_args["client_kwargs"]["connector"]._ssl
 
 
-def test_ssl_verify_custom_cert(dvc, mocker):
+def test_ssl_verify_custom_cert(mocker):
     mocker.patch("ssl.SSLContext.load_verify_locations")
     config = {
         "url": "http://example.com/",
@@ -78,7 +78,7 @@ def test_ssl_verify_custom_cert(dvc, mocker):
     )
 
 
-def test_http_method(dvc):
+def test_http_method():
     config = {
         "url": "http://example.com/",
         "path": "file.html",
