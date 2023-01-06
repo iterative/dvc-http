@@ -4,14 +4,14 @@ import os
 import pytest
 
 from .cloud import HTTP
-from .httpd import StaticFileServer
+from .httpd import static_file_server
 
 
 @pytest.fixture(scope="session")
 def http_server(tmp_path_factory):
     directory = os.fspath(tmp_path_factory.mktemp("http"))
-    with StaticFileServer(directory=directory) as httpd:
-        yield httpd
+    with static_file_server(directory) as server:
+        yield server
 
 
 @pytest.fixture

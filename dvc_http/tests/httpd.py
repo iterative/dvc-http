@@ -2,8 +2,9 @@ import hashlib
 import os
 import threading
 from contextlib import contextmanager
+from functools import partial
 from http import HTTPStatus
-from http.server import HTTPServer
+from http.server import ThreadingHTTPServer
 
 from RangeHTTPServer import RangeRequestHandler
 
@@ -67,22 +68,7 @@ def run_server_on_thread(server):
     server.server_close()
 
 
-class StaticFileServer:
-    _lock = threading.Lock()
-
-    def __init__(self, directory):
-        from functools import partial
-
-        addr = ("localhost", 0)
-        req = partial(TestRequestHandler, directory=directory)
-        server = HTTPServer(addr, req)
-        self.runner = run_server_on_thread(server)
-
-    # pylint: disable=no-member
-    def __enter__(self):
-        self._lock.acquire()
-        return self.runner.__enter__()
-
-    def __exit__(self, *args):
-        self.runner.__exit__(*args)
-        self._lock.release()
+def static_file_server(directory):
+    req = partial(TestRequestHandler, directory=directory)
+    server = ThreadingHTTPServer(("localhost", 0), req)
+    return run_server_on_thread(server)
