@@ -8,6 +8,9 @@ on:
     - cron: '5 1 * * *'  # every day at 01:05
   workflow_dispatch:
 
+env:
+  FORCE_COLOR: "1"
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
@@ -40,8 +43,8 @@ jobs:
     - name: install
       run: |
         pip install --upgrade pip wheel
-        pip install -e ".[tests]"
         pip install "dvc[testing] @ git+https://github.com/iterative/dvc"
+        pip install -e ".[tests]"
 
     - name: lint
       timeout-minutes: 10
@@ -56,3 +59,9 @@ jobs:
       with:
         file: ./coverage.xml
         fail_ci_if_error: false
+
+    - name: build package
+      run: |
+        pip install --upgrade build twine
+        python -m build
+        twine check dist/*
