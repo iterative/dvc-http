@@ -50,7 +50,7 @@ def test_custom_auth_method():
 
     fs = HTTPFileSystem(**config)
 
-    headers = fs.fs_args["headers"]
+    headers = fs.fs_args["client_kwargs"]["headers"]
     assert header in headers
     assert headers[header] == password
 
