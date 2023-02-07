@@ -91,10 +91,12 @@ def test_http_method():
     }
 
     fs = HTTPFileSystem(**config, method="PUT")
-    assert fs.upload_method == "PUT"
+    assert fs.fs_args.get("upload_method") == "PUT"
+    assert fs.fs.upload_method == "PUT"
 
     fs = HTTPFileSystem(**config, method="POST")
-    assert fs.upload_method == "POST"
+    assert fs.fs_args.get("upload_method") == "POST"
+    assert fs.fs.upload_method == "POST"
 
 
 @pytest.mark.parametrize(

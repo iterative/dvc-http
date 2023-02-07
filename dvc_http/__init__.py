@@ -1,9 +1,8 @@
 import threading
 from getpass import getpass
-from typing import TYPE_CHECKING, BinaryIO, Union
+from typing import TYPE_CHECKING, Union
 
-from dvc_objects.fs.base import AnyFSPath, FileSystem
-from dvc_objects.fs.callbacks import DEFAULT_CALLBACK, Callback
+from dvc_objects.fs.base import FileSystem
 from dvc_objects.fs.errors import ConfigError
 from funcy import cached_property, memoize, wrap_with
 
@@ -45,8 +44,8 @@ class HTTPFileSystem(FileSystem):
 
     def __init__(self, fs=None, timeout=REQUEST_TIMEOUT, **kwargs):
         super().__init__(fs, **kwargs)
-        self.upload_method = kwargs.get("method", "POST")
 
+        self.fs_args["upload_method"] = kwargs.get("method", "POST")
         client_kwargs = self.fs_args.setdefault("client_kwargs", {})
         client_kwargs.update(
             {
@@ -129,27 +128,15 @@ class HTTPFileSystem(FileSystem):
 
     @cached_property
     def fs(self):
-        from fsspec.implementations.http import (
-            HTTPFileSystem as _HTTPFileSystem,
-        )
+        from .spec import HTTPFileSystem as _HTTPFileSystem
 
-        return _HTTPFileSystem(get_client=self.get_client, **self.fs_args)
+        return _HTTPFileSystem(
+            get_client=self.get_client,
+            **self.fs_args,
+        )
 
     def unstrip_protocol(self, path: str) -> str:
         return path
-
-    def put_file(
-        self,
-        from_file: Union[AnyFSPath, BinaryIO],
-        to_info: AnyFSPath,
-        callback: Callback = DEFAULT_CALLBACK,
-        size: int = None,
-        **kwargs,
-    ) -> None:
-        kwargs.setdefault("method", self.upload_method)
-        super().put_file(
-            from_file, to_info, callback=callback, size=size, **kwargs
-        )
 
     # pylint: disable=arguments-differ
 
