@@ -2,9 +2,10 @@ import threading
 from getpass import getpass
 from typing import TYPE_CHECKING, Union
 
+from dvc.utils.objects import cached_property
 from dvc_objects.fs.base import FileSystem
 from dvc_objects.fs.errors import ConfigError
-from funcy import cached_property, memoize, wrap_with
+from funcy import memoize, wrap_with
 
 if TYPE_CHECKING:
     from ssl import SSLContext
