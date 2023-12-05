@@ -43,16 +43,23 @@ class HTTPFileSystem(FileSystem):
     SESSION_BACKOFF_FACTOR = 0.1
     REQUEST_TIMEOUT = 60
 
-    def __init__(self, fs=None, timeout=REQUEST_TIMEOUT, **kwargs):
+    def __init__(
+        self,
+        fs=None,
+        ssl_verify=None,
+        read_timeout=REQUEST_TIMEOUT,
+        connect_timeout=REQUEST_TIMEOUT,
+        **kwargs,
+    ):
         super().__init__(fs, **kwargs)
 
         self.fs_args["upload_method"] = kwargs.get("method", "POST")
         client_kwargs = self.fs_args.setdefault("client_kwargs", {})
         client_kwargs.update(
             {
-                "ssl_verify": kwargs.get("ssl_verify"),
-                "read_timeout": kwargs.get("read_timeout", timeout),
-                "connect_timeout": kwargs.get("connect_timeout", timeout),
+                "ssl_verify": ssl_verify,
+                "read_timeout": read_timeout,
+                "connect_timeout": connect_timeout,
                 "trust_env": True,  # Allow reading proxy configs from the env
             }
         )
@@ -92,7 +99,9 @@ class HTTPFileSystem(FileSystem):
             )
         return {"client_kwargs": client_kwargs}
 
-    async def get_client(self, **kwargs):
+    async def get_client(
+        self, ssl_verify, read_timeout, connect_timeout, **kwargs
+    ):
         import aiohttp
         from aiohttp_retry import ExponentialRetry
 
@@ -110,19 +119,18 @@ class HTTPFileSystem(FileSystem):
         # data blobs. We remove the total timeout, and only limit the time
         # that is spent when connecting to the remote server and waiting
         # for new data portions.
-        connect_timeout = kwargs.pop("connect_timeout")
         kwargs["timeout"] = aiohttp.ClientTimeout(
             total=None,
             connect=connect_timeout,
             sock_connect=connect_timeout,
-            sock_read=kwargs.pop("read_timeout"),
+            sock_read=read_timeout,
         )
 
         kwargs["connector"] = aiohttp.TCPConnector(
             # Force cleanup of closed SSL transports.
             # See https://github.com/iterative/dvc/issues/7414
             enable_cleanup_closed=True,
-            ssl=make_context(kwargs.pop("ssl_verify", None)),
+            ssl=make_context(ssl_verify),
         )
 
         return ReadOnlyRetryClient(**kwargs)
