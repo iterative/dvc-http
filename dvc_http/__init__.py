@@ -49,6 +49,7 @@ class HTTPFileSystem(FileSystem):
         ssl_verify=None,
         read_timeout=REQUEST_TIMEOUT,
         connect_timeout=REQUEST_TIMEOUT,
+        rewrites=(),
         **kwargs,
     ):
         super().__init__(fs, **kwargs)
@@ -61,6 +62,7 @@ class HTTPFileSystem(FileSystem):
                 "read_timeout": read_timeout,
                 "connect_timeout": connect_timeout,
                 "trust_env": True,  # Allow reading proxy configs from the env
+                "rewrites": rewrites,
             }
         )
 
@@ -105,7 +107,7 @@ class HTTPFileSystem(FileSystem):
         import aiohttp
         from aiohttp_retry import ExponentialRetry
 
-        from .retry import ReadOnlyRetryClient
+        from .client import Client
 
         kwargs["retry_options"] = ExponentialRetry(
             attempts=self.SESSION_RETRIES,
@@ -133,7 +135,7 @@ class HTTPFileSystem(FileSystem):
             ssl=make_context(ssl_verify),
         )
 
-        return ReadOnlyRetryClient(**kwargs)
+        return Client(**kwargs)
 
     @cached_property
     def fs(self):

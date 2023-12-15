@@ -112,3 +112,17 @@ def test_timeout_options(kwarg, value):
     fs = HTTPFileSystem(**config)
 
     assert fs.fs_args["client_kwargs"][kwarg] == value
+
+
+def test_rewrite():
+    config = {
+        "url": "http://example.com/",
+        "path": "files/md5/ab/cdef",
+    }
+
+    fs = HTTPFileSystem(**config)
+    assert fs.fs_args["client_kwargs"].get("rewrites") == ()
+
+    rewrites = [(r"/files/md5/(.+)$", r"/files-md5/\1")]
+    fs = HTTPFileSystem(**config, rewrites=rewrites)
+    assert fs.fs_args["client_kwargs"].get("rewrites") == rewrites
