@@ -1,11 +1,12 @@
 import threading
 from functools import cached_property
 from getpass import getpass
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, ClassVar, Union
+
+from funcy import memoize, wrap_with
 
 from dvc_objects.fs.base import FileSystem
 from dvc_objects.fs.errors import ConfigError
-from funcy import memoize, wrap_with
 
 if TYPE_CHECKING:
     from ssl import SSLContext
@@ -17,9 +18,7 @@ def ask_password(host, user):
     return getpass(f"Enter a password for host '{host}' user '{user}':\n")
 
 
-def make_context(
-    ssl_verify: Union[bool, str, None]
-) -> Union["SSLContext", bool, None]:
+def make_context(ssl_verify: Union[bool, str, None]) -> Union["SSLContext", bool, None]:
     if isinstance(ssl_verify, bool) or ssl_verify is None:
         return ssl_verify
 
@@ -36,7 +35,10 @@ def make_context(
 class HTTPFileSystem(FileSystem):
     protocol = "http"
     PARAM_CHECKSUM = "checksum"
-    REQUIRES = {"aiohttp": "aiohttp", "aiohttp-retry": "aiohttp_retry"}
+    REQUIRES: ClassVar[dict[str, str]] = {
+        "aiohttp": "aiohttp",
+        "aiohttp-retry": "aiohttp_retry",
+    }
     CAN_TRAVERSE = False
 
     SESSION_RETRIES = 5
@@ -81,8 +83,7 @@ class HTTPFileSystem(FileSystem):
         if auth_method == "basic":
             if user is None or password is None:
                 raise ConfigError(
-                    "HTTP 'basic' authentication require both "
-                    "'user' and 'password'"
+                    "HTTP 'basic' authentication require both " "'user' and 'password'"
                 )
             client_kwargs["auth"] = aiohttp.BasicAuth(user, password)
         elif auth_method == "custom":
@@ -94,14 +95,10 @@ class HTTPFileSystem(FileSystem):
                 )
             client_kwargs["headers"] = {custom_auth_header: password}
         else:
-            raise NotImplementedError(
-                f"Auth method {auth_method!r} is not supported."
-            )
+            raise NotImplementedError(f"Auth method {auth_method!r} is not supported.")
         return {"client_kwargs": client_kwargs}
 
-    async def get_client(
-        self, ssl_verify, read_timeout, connect_timeout, **kwargs
-    ):
+    async def get_client(self, ssl_verify, read_timeout, connect_timeout, **kwargs):
         import aiohttp
         from aiohttp_retry import ExponentialRetry
 
