@@ -1,9 +1,10 @@
 import ssl
 
 import pytest
-from dvc.fs import HTTPFileSystem
 from fsspec.asyn import get_loop as get_fsspec_loop
 from fsspec.asyn import sync
+
+from dvc.fs import HTTPFileSystem
 
 
 def test_public_auth_method():

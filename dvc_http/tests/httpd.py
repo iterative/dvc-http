@@ -37,7 +37,7 @@ class TestRequestHandler(RangeRequestHandler):
             yield data
             self.rfile.read(2)
 
-    def do_POST(self):
+    def do_POST(self):  # noqa: N802
         chunked = self.headers.get("Transfer-Encoding", "") == "chunked"
         path = self.translate_path(self.path)
         try:

@@ -6,9 +6,7 @@ class ReadOnlyRetryClient(RetryClient):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._write_opts = ExponentialRetry(
-            attempts=1, retry_all_server_errors=False
-        )
+        self._write_opts = ExponentialRetry(attempts=1, retry_all_server_errors=False)
 
     def post(self, *args, **kwargs):
         kwargs["retry_options"] = self._write_opts

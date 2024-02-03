@@ -1,6 +1,7 @@
 import uuid
 
 import requests
+
 from dvc.testing.cloud import Cloud
 from dvc.testing.path_info import HTTPURLInfo
 
