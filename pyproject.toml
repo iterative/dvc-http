@@ -30,22 +30,21 @@ dependencies = [
     "dvc",
     "fsspec[http]",
     "aiohttp-retry>=2.5.0",
-
 ]
 
 [project.optional-dependencies]
+dev = [
+    "dvc-http[tests]",
+    "mypy==1.8.0",
+    "types-requests",
+]
 tests = [
     "dvc[testing]",
-    # Test requirements
-    "pytest==6.2.5",
-    "pytest-cov==3.0.0",
-    "pytest-xdist==2.4.0",
-    "pytest-mock==3.6.1",
-    "flaky==3.7.0",
+    "pytest>=7,<9",
+    "pytest-cov>=4.1.0",
+    "pytest-xdist>=3.2",
+    "pytest-mock",
     "rangehttpserver==1.2.0",
-    "pylint==2.15.9",
-    "mypy==0.910",
-    "types-requests==2.25.11",
 ]
 
 [project.urls]
