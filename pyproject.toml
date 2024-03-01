@@ -30,13 +30,13 @@ dependencies = [
     "dvc",
     "fsspec[http]",
     "aiohttp-retry>=2.5.0",
-
 ]
 
 [project.optional-dependencies]
 dev = [
     "dvc-http[tests]",
     "mypy==1.8.0",
+    "types-requests",
 ]
 tests = [
     "dvc[testing]",
