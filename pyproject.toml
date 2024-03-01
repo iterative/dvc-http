@@ -44,7 +44,7 @@ tests = [
     "pytest-cov>=4.1.0",
     "pytest-xdist>=3.2",
     "pytest-mock",
-    "rangehttpserver==1.2.0",
+    "rangehttpserver>=1.2,<2",
 ]
 
 [project.urls]
