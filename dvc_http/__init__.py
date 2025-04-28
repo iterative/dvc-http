@@ -83,7 +83,7 @@ class HTTPFileSystem(FileSystem):
         if auth_method == "basic":
             if user is None or password is None:
                 raise ConfigError(
-                    "HTTP 'basic' authentication require both " "'user' and 'password'"
+                    "HTTP 'basic' authentication require both 'user' and 'password'"
                 )
             client_kwargs["auth"] = aiohttp.BasicAuth(user, password)
         elif auth_method == "custom":
